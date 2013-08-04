@@ -1,4 +1,4 @@
 jtopo
 =====
 
-Javascript topology libraries.
+An avascript topology libraries.
