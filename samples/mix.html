@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta http-equiv="X-UA-Compatible" content="IE=8" />
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<meta http-equiv="Cache-Control" content="no-cache,must-revalidate" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta http-equiv="Expires" content="0" />
+
+    <!-- Le styles -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="./css/bootstrap-responsive.css" rel="stylesheet">
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<link href="./css/jquery.snippet.min.css" rel="stylesheet">
+	<script type="text/javascript" src="js/snippet/jquery.snippet.min.js"></script>
+	<script type="text/javascript" src="js/excanvas.js"></script>
+	
+	<script type="text/javascript" src="js/jtopo-0.3.0-min.js"></script>
+
+	<script type="text/javascript" src="js/menu.js"></script>
+	<script id='code'>
+		function layout(){		
+			var box = new JTopo.DataBox('dataBox', $("canvas")[0]);
+
+			function ZoneNode(name){
+				var node = new JTopo.Node(name);
+				node.setType('zone');
+				return node;
+			}
+			function HostNode(name){
+				var node = new JTopo.Node(name);
+				node.setType('host');
+				return node;
+			}
+			function VmNode(name){
+				var node = new JTopo.Node(name);
+				node.setType('vm');
+				return node;
+			}
+		    var links = [JTopo.Link, JTopo.FoldLink, JTopo.CurveLink];
+			var treeLayout = {type: 'tree', auto: true, width: 60, height: 70, direction:'bottom'};
+			var starLayout = {type: 'star', auto: true, r:220, beginDegree:0, endDegree:Math.PI};
+
+			var zoneNode = new ZoneNode('testzone');
+			box.add(zoneNode);			
+			zoneNode.setLocation(350, 100);
+			zoneNode.layout = Math.random()>0.5 ?  {type: 'tree', auto: true, width: 220, height: 130, direction: 'bottom'}: starLayout;
+			var hostCount =  3;
+	
+			var HostLink = links[Math.floor(Math.random()*links.length)];
+			var VmLink = Math.random()>0.3 ? JTopo.Link : JTopo.FoldLink;
+			var hostLayout = Math.random()>0.5 ?  treeLayout: {type: 'star',  auto: true, r:100, beginDegree:0, endDegree:Math.PI};
+		    var fold = Math.random() > 0.5 ? 'x':'y';
+		    var fold2 = Math.random() > 0.5 ? 'x':'y';
+		    
+			for(var i=0; i<hostCount; i++){
+				var hostNode = new HostNode("h" + i);
+				hostNode.layout = hostLayout;
+				box.add(hostNode);
+				
+				var link = new HostLink(zoneNode, hostNode);
+				link.fold = fold;
+				box.add(link);
+				
+				var n = 2 + Math.random() * 2;
+				
+				for(var j=0; j<n; j++){
+					var vmNode = new VmNode("v" + i + "" + j );
+					box.add(vmNode);
+					var link = new VmLink(hostNode, vmNode);
+					link.fold = fold2;
+					box.add(link);
+				}
+			}
+
+			box.layoutNode(zoneNode);
+
+			box.updateView();
+		}
+		$(document).ready(layout);
+	</script>
+	<style>
+		canvas {
+			background-color:#EEEEEE;
+			border:1px solid #444;
+		}
+	</style>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Project name</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              Logged in as <a href="#" class="navbar-link">Username</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="about.html">About</a></li>
+              <li><a href="contact.html">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list" id='Menu_ul'>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+          <canvas id="canvas" style="" width="800" height="500"></canvas>
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>&copy; Company 2013</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+  </body>
+</html>

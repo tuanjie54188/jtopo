@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta http-equiv="X-UA-Compatible" content="IE=8" />
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<meta http-equiv="Cache-Control" content="no-cache,must-revalidate" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta http-equiv="Expires" content="0" />
+
+    <!-- Le styles -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="./css/bootstrap-responsive.css" rel="stylesheet">
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<link href="./css/jquery.snippet.min.css" rel="stylesheet">
+	<script type="text/javascript" src="js/snippet/jquery.snippet.min.js"></script>
+	<script type="text/javascript" src="js/excanvas.js"></script>
+
+	<script type="text/javascript" src="js/jtopo-0.3.0-min.js"></script>
+
+	<script type="text/javascript" src="js/menu.js"></script>
+	<script id='code'>
+		// Simulator for DIY an virtual computer through of mouse drag.
+		// Step:
+		// 1. Drag the components(disk/memory/OS(CD)) to the chassis(one panel on 
+		//	  most left side),
+		// 2. Click the play button, Congratulation! one virtual computer is born.
+		// 3. See the virtual computer on the bottom panel.
+
+		$(document).ready(function(){					
+			var box = new JTopo.DataBox('dataBox', $("canvas")[0]);
+			//box.image.src= './img/room.jpg';
+
+			(function(){
+							
+				function HardDiskNode(name){
+					var node = new JTopo.Node(name);
+					node.inContainer = function(target){
+						return true;
+					};
+					node.outContainer = function(target){
+						return true;
+					};
+					node.setSize(128, 128);
+					node.setImage('./img/harddisk.png');
+					return node;
+				}
+
+				function MemoryNode(name){
+					var node = new JTopo.Node(name);
+					node.inContainer = function(target){
+						return true;
+					};
+					node.outContainer = function(target){
+						return true;
+					};
+					node.setTip('DDR-3');
+					node.setSize(128, 128);
+					node.setImage('./img/memory.png');
+					return node;
+				}
+
+				function OsNode(name){
+					var node = new JTopo.Node(name);
+					node.inContainer = function(target){
+						return true;
+					};
+					node.outContainer = function(target){
+						return true;
+					};
+					node.setSize(128, 128);
+					node.setImage('./img/memory.png');
+					return node;
+				}
+
+				//An empty chassis
+				var chassis = new JTopo.GridContainer("vm");
+				chassis.setDragable(false);
+				chassis.x = 21; chassis.y = 100;
+				chassis.cellWidth = 140;
+				chassis.cellHeight = 160;
+				box.add(chassis);
+
+
+				// Disk container
+				var diskContainer = new JTopo.GridContainer();
+				diskContainer.setDragable(false);
+				diskContainer.cellWidth = 128;
+				diskContainer.cellHeight = 128;
+				box.add(diskContainer);
+				diskContainer.x = 350; diskContainer.y = 30;
+				diskContainer.rows = 1; diskContainer.cols = 3;
+				diskContainer.style = {fillStyle: '255, 200, 254'};
+				// Put in three pieces of hard disk
+				for(var i=0; i<3; i++){
+					var node = new HardDiskNode((i+1)*20 + 'GB');
+					box.add(node);
+					diskContainer.add(node);
+				}
+				
+				// Memory Container
+				var memoryContainer = new JTopo.GridContainer();
+				memoryContainer.setDragable(false);
+				memoryContainer.cellWidth = 128;
+				memoryContainer.cellHeight = 128;
+				box.add(memoryContainer);
+				memoryContainer.x = 350; memoryContainer.y = 208;
+				memoryContainer.rows = 1; memoryContainer.cols = 3;
+				memoryContainer.style = {fillStyle: '255, 200, 254'};
+				// Put in three pieces of memory card
+				for(var i=0; i<3; i++){
+					var node = new MemoryNode((i+1) + 'GB');
+					box.add(node);
+					memoryContainer.add(node);
+				}
+
+				// OS(CD) Container
+				var OSContainer = new JTopo.GridContainer();
+				OSContainer.setDragable(false);
+				OSContainer.cellWidth = 128;
+				OSContainer.cellHeight = 128;
+				box.add(OSContainer);
+				OSContainer.x = 350; OSContainer.y = 408;
+				OSContainer.rows = 1; OSContainer.cols = 3;
+				OSContainer.style = {fillStyle: '255, 200, 254'};
+				// Put in three CDS
+				var oss = [
+					{name:'Windows-8', image: './img/OS_Windows_8.png'},
+					{name:'Linux', image: './img/OS_Ubuntu.png'},
+					{name:'Mac', image: './img/OS_Apple.png'}
+				];
+				for(var i=0; i<oss.length; i++){
+					var os = oss[i];
+					var node = new OsNode(os.name);
+					node.setSize(128, 128);
+					node.setImage(os.image);
+					box.add(node);
+					OSContainer.add(node);
+				}
+
+				// The virtual computer container(to accommodate already assembled).
+				var vmContainer = new JTopo.GridContainer();
+				vmContainer.setDragable(false);
+				box.add(vmContainer);
+				vmContainer.cellWidth = 128;
+				vmContainer.cellHeight = 128;
+				vmContainer.x = 0; vmContainer.y = 577;
+				vmContainer.rows = 2; vmContainer.cols = 10;
+
+				// Play button				
+				var playButton = new JTopo.Node();
+				playButton.setTip('execute!');
+				playButton.setDragable(false);
+				playButton.setImage('./img/ok.png');
+				playButton.setSize(64, 64);
+				playButton.setLocation(120, 490);
+				box.add(playButton);
+				
+				var vms = [];
+				// Play button's event handler
+				box.subscribe('mousedown', function(e){
+					if(e.target === playButton && chassis.items.length >= 3){
+						var node = new JTopo.Node();
+						node.setImage('./img/acer-samll.jpg');
+						box.add(node);
+						node.setSize(65, 124);
+						node.setLocation(100+ vms.length*148, 590);
+
+						var name = '';
+						for(var i=0; i<chassis.items.length; i++){
+							name += ' ' + chassis.items[i].name;
+						}
+						node.setName(name);
+						vms.push(node);
+						vmContainer.add(node);
+						box.updateView();
+					}
+				});
+			})();
+
+			box.updateView();			
+		});
+	</script>
+	<style>
+		canvas {
+			background-color:#EEEEEE;
+			border:1px solid #444;
+		}
+	</style>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Project name</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              Logged in as <a href="#" class="navbar-link">Username</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="about.html">About</a></li>
+              <li><a href="contact.html">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list" id='Menu_ul'>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+          <canvas id="canvas" style="" width="800" height="798"></canvas>
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>&copy; Company 2013</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+  </body>
+</html>

@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta http-equiv="X-UA-Compatible" content="IE=8" />
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<meta http-equiv="Cache-Control" content="no-cache,must-revalidate" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta http-equiv="Expires" content="0" />
+
+    <!-- Le styles -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="./css/bootstrap-responsive.css" rel="stylesheet">
+
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<link href="./css/jquery.snippet.min.css" rel="stylesheet">
+	<script type="text/javascript" src="js/snippet/jquery.snippet.min.js"></script>
+
+	<script type="text/javascript" src="js/excanvas.js"></script>
+	<script type="text/javascript" src="js/jtopo-0.3.0-min.js"></script>
+	<script type="text/javascript" src="js/menu.js"></script>
+	<script id='code'>
+		
+		/*
+		 * Usage:
+		 * <script type="text/javascript" src="jquery.js"> < /script>
+		 * <script type="text/javascript" src="jtopo-0.3.0-min.js"> </ script>
+		 */
+
+		$(document).ready(function(){					
+			var box = new JTopo.DataBox('dataBox', $("#canvas")[0]);
+			box.isShowRange = false;
+			var node = new JTopo.Node('Hello world!');
+			node.setLocation(387, 270);
+			box.add(node);
+
+			box.updateView();
+		});
+	</script>
+	<style>
+		canvas {
+			background-color:#EEEEEE;
+			border:1px solid #444;
+		}
+	</style>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Project name</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              Logged in as <a href="#" class="navbar-link">Username</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="about.html">About</a></li>
+              <li><a href="contact.html">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list" id='Menu_ul'>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+          <canvas id="canvas" style="" width="800" height="500"></canvas>
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>&copy; Company 2013</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+  </body>
+</html>

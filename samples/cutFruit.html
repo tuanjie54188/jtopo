@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<meta http-equiv="Cache-Control" content="no-cache,must-revalidate" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<meta http-equiv="Expires" content="0" />
+
+    <!-- Le styles -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="./css/bootstrap-responsive.css" rel="stylesheet">
+
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<link href="./css/jquery.snippet.min.css" rel="stylesheet">
+	<script type="text/javascript" src="js/snippet/jquery.snippet.min.js"></script>
+
+	<script type="text/javascript" src="js/excanvas.js"></script>
+	<script type="text/javascript" src="js/jtopo-0.3.0-min.js"></script>
+	<script type="text/javascript" src="js/menu.js"></script>
+	<script id='code'>
+
+		function randomFruit(){
+			var fruits = ['sandia','apple','basaha','peach','banana', 'boom'];
+			return fruits[Math.floor(Math.random()*fruits.length)];
+		}
+		// 音乐控制
+		function playSound(sound, volume){
+			var s = document.getElementById(sound);
+			s.volume = volume ? volume : 0.6;
+			s.play();
+		}
+		function stopSound(sound){
+			document.getElementById(sound).pause();
+		}
+		// 最高分记录
+		function getBestScore(){
+			var score = localStorage.getItem('best');
+			if(score == null){
+				score = 0;
+			}else{
+				score = parseInt(score);
+			}
+			return score;
+		}
+		function updateBestScore(newBest){
+			localStorage.setItem('best', newBest);
+		}
+		
+		$(document).ready(function(){					
+			var box = new JTopo.DataBox('dataBox', $("#canvas")[0]);
+			box.image.src = './img/cutfruit.jpg';//cutfruit_bg.jpg';
+			box.isRangeSelectable = false;
+			
+			function isBoom(node){
+				return node.image.src.indexOf('boom') != -1;
+			}
+			
+			var isGameOver = false;
+			
+			//游戏开始
+			function startGame(){
+				isGameOver = false;
+				box.clear();	
+				stopSound('menu');				
+				playSound('start');
+				var nodes = [];			
+				for(var i=0; i<3; i++){
+					var node = new JTopo.Node();
+					var fruit = randomFruit();
+					node.setImage('./img/fruit/'+fruit+'.png');					
+					box.add(node);
+					nodes.push(node);					
+					node.isFruit = true;
+				}
+				
+				var score = 0;
+				
+				var scoreIcon = iconNode('score.png', 10, 10);			
+				var scoreNode = new JTopo.TextNode('0');
+				scoreNode.style.fontSize = '18pt';
+				scoreNode.style.strokeStyle = 'rgb(255,255,0)';
+				scoreNode.setLocation(60, 24);
+				box.add(scoreNode);
+				
+				var bestScoreNode = new JTopo.TextNode('Best :' + getBestScore());
+				bestScoreNode.style.fontSize = '18pt';
+				bestScoreNode.style.strokeStyle = 'rgb(255,255,0)';
+				bestScoreNode.setLocation(10, 60);
+				box.add(bestScoreNode);
+				
+				var lose = 0;
+				var loseIcon = iconNode('lose.png', 530, 10);			
+				var loseNode = new JTopo.TextNode('0');
+				loseNode.style.fontSize = '18pt';
+				loseNode.style.strokeStyle = 'rgb(255,255,0)';
+				loseNode.setLocation(590, 22);
+				box.add(loseNode);
+
+				var aNode = new JTopo.Node();
+				var bNode = new JTopo.Node();
+				var link = new JTopo.Link(aNode, bNode);
+				box.add(link);
+								
+				box.subscribe('mouseover', function(e){
+					if(! e.context.isOnMouseDown) return;
+					var node = e.target;	
+					if(!node.isFruit || node.visible == false) {
+						return;
+					}	
+					if(isGameOver) return;
+					if(isBoom(node)){	
+						isGameOver = true;
+						playSound('boom', 1);
+						JTopo.Animation.stopAll();
+						JTopo.Animation.scala(node, {scala: 2, context:box}).run().onStop(function(n){
+							box.clear();							
+							JTopo.Animation.startAll();
+							GameOver();
+						});												
+					}else{
+						scoreNode.setName((score+=1));
+						if(score > getBestScore()){
+							updateBestScore(score);
+							bestScoreNode.setName('Best :' + score);
+						}
+						
+						playSound('splatter');
+						//切成两半
+						JTopo.Animation.dividedTwoPiece(node, 
+							{angle:Math.atan2(e.dy, e.dx), context:box}).run().onStop(function(n){
+								var fruit =  randomFruit();			
+								node.setImage('./img/fruit/'+fruit+'.png');
+						});
+					}
+				});
+				
+				for(var i=0; i<nodes.length; i++){
+					var node = nodes[i];
+					//不停的向往抛
+					var e = JTopo.Animation.repeatThrow(node, {context:box}).run()
+						.onStop(function(n){						
+						if(n.visible == true){
+							if(! isBoom(n)){																
+								loseNode.setName((++lose));							
+								iconNode('lose.png', n.x, n.y - 60);
+								if(lose > 3){
+									playSound('over');								
+									GameOver();								
+								}
+							}else{
+								var fruit =  randomFruit();			
+								n.setImage('./img/fruit/'+fruit+'.png');
+							}
+						}					
+						playSound('throw');
+					});
+					//旋转着
+					JTopo.Animation.rotate(node, {context:box}).run();
+				}				
+			}						
+			
+			// 在指定位置显示图像节点
+			function iconNode(image, x, y, isMenu){
+				var node = new JTopo.Node();
+				node.setImage('./img/fruit/' + image);
+				node.setLocation(x, y);
+				box.add(node);
+				node.isSelected = function(){ return false;	};
+				node.isFocus = function(){return false;	};
+				node.isMenu = isMenu;
+				node.setDragable(false);
+				return node;
+			}
+			
+			// 游戏结束
+			function GameOver(){
+				isGameOver = true;
+				JTopo.Animation.stopAll();
+				setTimeout(function(){
+					box.clear();
+					JTopo.Animation.startAll();
+					var overNode = iconNode('game-over.png', 60, -100);
+					JTopo.Animation.move(overNode, {context:box, position:{x:60, y:200}}).run();
+					setTimeout(function(){location.href = location.href}, 3000);
+				}, 1000);				
+			}
+			
+			// 进入游戏主菜单
+			function showMenu(){
+				box.clear();
+				playSound('menu');
+				var headBgNode = iconNode('home-mask.png', 0, -300);
+				JTopo.Animation.move(headBgNode, {context:box, position:{x:0, y:0}}).run();
+				
+				var logoNode = iconNode('logo.png', 14, -600);				
+				JTopo.Animation.move(logoNode, {context:box, position:{x:14, y:2}}).run();
+				
+				var ninjaNode = iconNode('ninja.png', 320, -900);
+				JTopo.Animation.move(ninjaNode, {context:box, position:{x:320, y:40}}).run();
+				
+				var homeDescNode = iconNode('home-desc.png', -1000, 127);								
+				JTopo.Animation.move(homeDescNode, {context:box, position:{x:16, y:127}}).run();
+				
+				setTimeout(function(){				
+					var peachNode = iconNode('peach.png', 91, 306, true);				
+					var dojoNode = iconNode('dojo.png', 34, 248);						
+					JTopo.Animation.rotate(dojoNode, {context:box, v: -0.01}).run();
+					JTopo.Animation.rotate(peachNode, {context:box, v: 0.03}).run();	
+					
+					var newGameNode = iconNode('new-game.png', 239, 220);				
+					var sandiaNode = iconNode('sandia.png', 289, 275, true);						
+					JTopo.Animation.rotate(sandiaNode, {context:box, v: 0.04}).run();
+					JTopo.Animation.rotate(newGameNode, {context:box, v: 0.01}).run();	
+					
+					var newNode = iconNode('new.png', 148, 213);
+					JTopo.Animation.cycle(newNode, {context:box, p1:{x:34, y:190}, p2:{x:34, y:200}}).run();	
+
+					var quitNode = iconNode('quit.png', 485, 303);
+					var boomNode = iconNode('boom.png', 521, 333, true);	
+					JTopo.Animation.rotate(quitNode, {context:box, v: 0.02}).run();	
+
+					box.subscribe('mouseover', function(e){
+						if(! e.context.isOnMouseDown) return;
+						var node = e.target;	
+						if(node == null) return;
+						if(!node.isMenu || node.visible == false) {
+							return;
+						}
+						playSound('splatter');
+						//切成两半
+						JTopo.Animation.dividedTwoPiece(node, 
+							{angle:Math.atan2(e.dy, e.dx), context:box}).run().onStop(function(n){						
+							startGame();
+						});									
+					});
+				}, 1500);
+			}
+			
+			showMenu();			
+			box.updateView();			
+		});
+				
+	</script>
+	<style>
+		canvas {
+			background-color:#EEEEEE;
+			border:1px solid #444;
+		}
+	</style>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Project name</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              Logged in as <a href="#" class="navbar-link">Username</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="about.html">About</a></li>
+              <li><a href="contact.html">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list" id='Menu_ul'>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+          <canvas id="canvas" style="" width="640" height="480"></canvas>
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+	<audio id="throw">
+        <source src="./sound/throw.ogg">
+    </audio>
+	<audio id="splatter">
+        <source src="./sound/splatter.ogg">
+    </audio>
+	<audio id="start">
+        <source src="./sound/start.ogg">
+    </audio>
+	<audio id="menu">
+        <source src="./sound/menu.ogg">
+    </audio>
+	<audio id="over">
+        <source src="./sound/over.ogg">
+    </audio>	
+	<audio id="boom">
+        <source src="./sound/boom.ogg">
+    </audio>
+      <footer>
+        <p>&copy; Company 2013</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+  </body>
+</html>
